@@ -1,0 +1,31 @@
+defaults:
+  - _self_
+  - datapaths: datapaths
+
+# Default spatial level 
+spatial_level: county
+
+dataverse:
+  baseurl: https://dataverse.harvard.edu
+  pid: doi:10.7910/DVN/F6PQAA
+
+# File mappings for different spatial levels
+file_mappings:
+  zcta:
+    files: ["zctas-2000.csv", "zctas-2010.csv"]
+  county:
+    files: ["counties-2000.csv", "counties-2010.csv"]
+
+data:
+  # Spatial levels to process
+  spatial_levels: [zcta, tract, county]
+  dtype_dict:
+    # ID columns for all spatial levels
+    GEOID: str           # for county and tract levels (raw column name)
+    GEOID10: str         # for zcta level (raw column name)
+    # Data columns (raw column names)
+    date: str
+    smokePM_pred: float
+  year_min: 2006
+  year_max: 2020
+  base_name: wildfire__childs

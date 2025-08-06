@@ -1,0 +1,11 @@
+input:
+  pm25_components__randall__raw: 
+    zcta: null
+    county: null
+    tract: null
+
+output:
+  pm25_components__randall: 
+    zcta_daily: null
+    county_daily: null
+    tract_daily: null

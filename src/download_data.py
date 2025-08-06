@@ -32,12 +32,13 @@ def main(cfg: DictConfig):
     # Download the ZIP file
     response = data_api.get_datafile(str(file2id[target_zip_filename]), is_pid=False, auth=False)
     
-    # Create output directory
-    output_dir = "data/input/pm25_components__randall__raw"
-    os.makedirs(output_dir, exist_ok=True)
+    # Create output directory using config
+    output_dir = cfg.processing.input_dir.replace('block-groups-tracts-counties-states-zctas-2000-2010', '').rstrip('/')
+    output_dir_path = os.path.abspath(output_dir)
+    os.makedirs(output_dir_path, exist_ok=True)
     
     # Save the ZIP file
-    zip_path = os.path.join(output_dir, target_zip_filename)
+    zip_path = os.path.join(output_dir_path, target_zip_filename)
     with open(zip_path, "wb") as f:
         f.write(response.content)
     
@@ -46,13 +47,13 @@ def main(cfg: DictConfig):
     # Extract the ZIP file
     print(f"Extracting {target_zip_filename}...")
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extractall(output_dir)
+        zip_ref.extractall(output_dir_path)
     
-    print(f"Extracted files to {output_dir}")
+    print(f"Extracted files to {output_dir_path}")
     
     # List extracted files
     extracted_files = []
-    for root, dirs, files in os.walk(output_dir):
+    for root, dirs, files in os.walk(output_dir_path):
         for file in files:
             if file.endswith('.csv'):
                 extracted_files.append(os.path.join(root, file))
@@ -62,6 +63,9 @@ def main(cfg: DictConfig):
     # Optionally, remove the ZIP file after extraction
     os.remove(zip_path)
     print(f"Removed ZIP file: {zip_path}")
+    
+    print(f"\nData download and extraction complete!")
+    print(f"Files are ready for processing in: {cfg.processing.input_dir}")
 
     
 if __name__ == "__main__":

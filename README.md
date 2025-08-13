@@ -1,6 +1,6 @@
 # pm25_components__schwartz
 
-Code to process and format PM2.5 **component** estimates from Schwartz et al. at the Harvard Dataverse. This pipeline downloads pre-aggregated spatial data and processes it into standardized yearly files across multiple geographic resolutions.
+Code to process and format PM2.5 **component** estimates from Schwartz et al. at the Harvard Dataverse. This pipeline downloads pre-aggregated spatial data and processes it into standardized yearly files across multiple geographic resolutions using a Snakemake workflow.
 
 This pipeline processes 15 PM2.5 components: br, ca, cu, ec, fe, k, nh4, ni, no3, oc, pb, si, so4, v, and zn for years 2000-2019 across 5 spatial resolutions: block groups, tracts, counties, states, and ZCTAs.
 
@@ -25,9 +25,28 @@ In this repository, we download the complete dataset and reformat it into yearly
 
 ---
 
-# Codebook
+## Workflow Structure
 
-## Dataset Columns
+The pipeline consists of three main steps:
+
+1. **Directory Setup**: Creates the required directory structure for input/output data
+2. **Data Download**: Downloads raw CSV files from Harvard Dataverse
+3. **Data Processing**: Converts raw files into yearly Parquet files with standardized formatting
+
+---
+
+# Data Processing Details
+
+The original data is organized into two decades:
+- **2000s files** (`*-2000.csv`): Contains data for years 2000-2009 and 2010-2019
+- **2010s files** (`*-2010.csv`): Contains data for years 2000-2019 with updated spatial boundaries
+
+The pipeline correctly handles this by:
+- Extracting years 2000-2009 from `-2000` files
+- Extracting years 2010-2019 from `-2010` files
+- Using appropriate ID column mappings for each decade (different column names between 2000 and 2010 Census boundaries)
+
+# Codebook
 
 The output files contain PM2.5 component concentrations aggregated by geographic units and year. Each file includes:
 
@@ -55,51 +74,30 @@ The output files contain PM2.5 component concentrations aggregated by geographic
   - `v`: Vanadium component
   - `zn`: Zinc component
 
-## Output File Structure
+---
 
-Output files follow the naming convention: `pm25_components__schwartz__[spatial_level]_yearly__[year].parquet`
+# Configuration and File Structure
 
-Examples:
-* `pm25_components__schwartz__county_yearly__2015.parquet`
-* `pm25_components__schwartz__zcta_yearly__2010.parquet`
-* `pm25_components__schwartz__block_group_yearly__2005.parquet`
+## Key Configuration Files
 
-Files are stored in Parquet format for efficient storage and processing, organized in directories by spatial resolution:
-* `output/county_yearly/`
-* `output/tract_yearly/`
-* `output/state_yearly/`
-* `output/zcta_yearly/`
-* `output/block_group_yearly/`
+* **`conf/config.yaml`**: Main pipeline settings including:
+  - File mappings between input and output naming conventions
+  - ID column mappings for different decades and spatial resolutions
+  - Spatial levels and year ranges to process
+  - Data type specifications for consistent formatting
+
+* **`conf/defaults.yaml`**: Processing parameters that can be overridden:
+  - `spatial_level`: Target spatial resolution for single-file processing
+  - `year`: Target year for single-file processing
+
+* **`conf/datapaths/`**: Environment-specific data path configurations
+  - `datapaths.yaml`: Local development paths
 
 ---
 
-# Configuration Files
+# Quick Start
 
-The configuration structure within the `/conf` folder allows you to modify parameters for:
-* Data download: `src/download_data.py`
-* Data processing: `src/process_data.py`
-* Quality control: `src/qc_check.py`
-* Directory path creation: `utils/create_dir_paths.py`
-
-## Key Parameters
-
-* **Dataverse settings**: Harvard Dataverse URL and persistent identifier (DOI)
-* **Spatial levels**: Which geographic resolutions to process (block groups, tracts, counties, states, ZCTAs)
-* **Year range**: Data processing period (2000-2019)
-* **Data types**: Explicit type casting for ID columns and component values
-* **File mappings**: Translation between input and output file naming conventions
-* **ID column mappings**: Decade-specific column name mappings for spatial identifiers
-
-## Configuration Files
-
-* `conf/config.yaml`: Main pipeline configuration including dataverse settings, spatial levels, data types, and processing parameters
-* `conf/datapaths/datapaths.yaml`: Input and output data path specifications
-
----
-
-# Run
-
-## Conda Environment
+## Environment Setup
 
 Clone the repository and create a conda environment:
 
@@ -111,48 +109,48 @@ conda env create -f requirements.yaml
 conda activate pm25_components_schwartz  
 ```
 
-It is also possible to use `mamba`:
+You can also use `mamba` for faster package resolution:
 
 ```bash
 mamba env create -f requirements.yaml
 mamba activate pm25_components_schwartz
 ```
 
-## Input and Output Paths
+## Running the Complete Pipeline
 
-Run the directory creation utility:
+**Option 1: Full pipeline execution (recommended)**
 
 ```bash
+# Run the complete pipeline with parallel processing
+snakemake --cores 4
+
+```
+
+**Option 3: Step-by-step manual execution**
+
+```bash
+# Step 1: Create directory structure
 python utils/create_dir_paths.py
-```
 
-This creates the necessary directory structure for input and output data based on the configuration in `conf/datapaths/datapaths.yaml`.
-
-## Pipeline
-
-You can run the pipeline steps manually:
-
-**Step 1: Download data from Harvard Dataverse**
-
-```bash
+# Step 2: Download raw data from Harvard Dataverse
 python src/download_data.py
+
+# Step 3: Process specific combinations
+python src/process_data.py spatial_level=county year=2015
+python src/process_data.py spatial_level=zcta year=2010
 ```
 
-This downloads and extracts the ZIP file containing all spatial resolution files from the Harvard Dataverse.
+## Output Validation
 
-**Step 2: Process data into yearly files**
+The processed files maintain strict formatting standards:
+- **Spatial IDs**: Always cast as strings for consistent handling
+- **Year column**: Integer type with values matching filename
+- **PM2.5 components**: Float64 with appropriate null handling
+- **File naming**: Consistent `pm25_components__schwartz__[spatial_level]_yearly__[year].parquet` pattern
 
-```bash
-python src/process_data.py
-```
+---
 
-This processes the raw CSV files into yearly Parquet files with:
-- Standardized column names (ID columns renamed to spatial resolution names)
-- String data type casting for all spatial identifiers
-- Proper decade-based year splitting (2000-2009 from `-2000` files, 2010-2019 from `-2010` files)
-- Consistent file naming convention
-
-## References
+# References
 
 The underlying PM2.5 component data comes from research by Schwartz et al. Please cite the original dataset when using this processed data:
 
@@ -172,13 +170,3 @@ The pipeline correctly handles this by:
 - Extracting years 2000-2009 from `-2000` files
 - Extracting years 2010-2019 from `-2010` files
 - Using appropriate ID column mappings for each decade (different column names between 2000 and 2010 Census boundaries)
-
-## Spatial Resolution Details
-
-| Resolution | Typical Count | ID Column | Description |
-|------------|---------------|-----------|-------------|
-| Block Groups | ~208K-216K | `block_group` | Finest geographic unit |
-| Census Tracts | ~65K-73K | `tract` | Sub-county divisions |
-| ZIP Code Tabulation Areas | ~32K | `zcta` | Postal code approximations |
-| Counties | ~3K | `county` | County-level aggregations |
-| States | 49 | `state` | State-level aggregations |

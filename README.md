@@ -37,11 +37,11 @@ The pipeline consists of three main steps:
 
 # Data Processing Details
 
-The original data is organized into two decades:
-- **2000s files** (`*-2000.csv`): Contains data for years 2000-2009 and 2010-2019
-- **2010s files** (`*-2010.csv`): Contains data for years 2000-2019 with updated spatial boundaries
+For each spatial level, the source data is organized into two files:
+- **2000s files** (`*-2000.csv`): PM2.5 component data for 2000–2019, aggregated using the 2000 Census geographic boundaries 
+- **2010s files** (`*-2010.csv`):  PM2.5 component data for 2000–2019, aggregated using the 2010 Census geographic boundaries
 
-The pipeline correctly handles this by:
+The pipeline handles this by:
 - Extracting years 2000-2009 from `-2000` files
 - Extracting years 2010-2019 from `-2010` files
 - Using appropriate ID column mappings for each decade (different column names between 2000 and 2010 Census boundaries)

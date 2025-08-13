@@ -1,44 +1,41 @@
 import pandas as pd
 import os
-import yaml
-from pathlib import Path
+import hydra
+from omegaconf import DictConfig
 
 # This script processes PM2.5 component data by splitting it into yearly files.
 # The methodology follows this structure:
 # - Data for 2000-2009 uses the -2000 file as input
-# - Data for 2010-2020 uses the -2010 file as input (when available)
-# - id columns are renamed and types are casted as per config
-#TODO: add hydra, snakemake, and datapath handling
-
-def load_config():
-    """Load configuration from config files"""
-    config_dir = Path(__file__).parent.parent / "conf"
-    with open(config_dir / "config.yaml", 'r') as f:
-        config = yaml.safe_load(f)
-    with open(config_dir / "datapaths" / "datapaths.yaml", 'r') as f:
-        datapaths = yaml.safe_load(f)
-    
-    return config, datapaths
+# - Data for 2010-2019 uses the -2010 file as input (when available)
+# - ID columns are renamed and types are cast as per config
+# - Uses hydra for configuration management and datapaths for directory structure
 
 
-def split_data_by_year(input_file, spatial_resolution, output_dir, output_format, decade_suffix, id_column_mapping, base_name):
+def process_single_year(input_file, spatial_resolution, output_dir, year, id_column_mapping, decade_suffix):
     """
-    Split PM2.5 components data by year
+    Process PM2.5 components data for a single year and spatial resolution
     
     Parameters:
-    input_file (str): Path to the input CSV file (e.g., zctas-2000.csv)
-    output_dir (str): Directory to save the yearly files
-    spatial_resolution (str): Spatial resolution (e.g., 'zctas', 'counties', 'tracts', 'block_groups', 'states')
-    decade_suffix (str): Either '2000' or '2010' indicating the source decade
-    output_format (str): Output format ('parquet' or 'csv')
+    input_file (str): Path to the input CSV file
+    spatial_resolution (str): Spatial resolution (e.g., 'zcta', 'county', etc.)
+    output_dir (str): Directory to save the yearly file
+    year (int): Specific year to process
     id_column_mapping (dict): Mapping of spatial levels to their original ID column names
+    decade_suffix (str): Either '2000' or '2010' indicating the source decade
     """
-    print(f"Processing {input_file} for {spatial_resolution} resolution...")
+    print(f"Processing {input_file} for {spatial_resolution} resolution, year {year}...")
     
     df = pd.read_csv(input_file)
     
     if 'year' not in df.columns:
         print(f"Warning: 'year' column not found in {input_file}. Available columns: {df.columns.tolist()}")
+        return
+    
+    # Filter for the specific year
+    df = df[df['year'] == year].copy()
+    
+    if len(df) == 0:
+        print(f"No data found for year {year} in {input_file}")
         return
     
     # Rename the ID column to match the spatial level name
@@ -56,72 +53,75 @@ def split_data_by_year(input_file, spatial_resolution, output_dir, output_format
         df[spatial_resolution] = df[spatial_resolution].astype(str)
         print(f"Cast '{spatial_resolution}' column to string type")
     
+    # Create output directory and save file
     os.makedirs(output_dir, exist_ok=True)
-    years = sorted(df['year'].unique())
+    output_file = os.path.join(output_dir, f"pm25_components__schwartz__{spatial_resolution}_yearly__{year}.parquet")
+    df.to_parquet(output_file, index=False)
+    print(f"Saved {len(df)} records to {output_file}")
+
+
+@hydra.main(config_path="../conf", config_name="config", version_base=None)
+def main(cfg: DictConfig):
+    """Main processing function - processes single spatial level and year"""
     
-    # Determine year range based on decade suffix
-    if decade_suffix == '2000':
-        target_years = [year for year in years if 2000 <= year <= 2009]
-    elif decade_suffix == '2010':
-        target_years = [year for year in years if 2010 <= year <= 2020]
-    else:
-        target_years = years  # Process all years if suffix is unclear
+    # Standard directories (set up by create_dir_paths.py)
+    input_dir = "data/input/pm25_components__schwartz__raw/block-groups-tracts-counties-states-zctas-2000-2010"
+    output_base_dir = "data/output"
     
-    print(f"Found years: {years}")
-    print(f"Processing years: {target_years}")
+    # Configuration values
+    file_mappings = cfg.file_mappings
+    id_column_mappings = cfg.id_column_mappings
     
-    # Split data by year
-    for year in target_years:
-        year_data = df[df['year'] == year].copy()
+    # Get command line overrides for spatial level and year
+    spatial_level = cfg.get('spatial_level', None)
+    year = cfg.get('year', None)
+    
+    if not spatial_level:
+        print("❌ Error: spatial_level must be specified")
+        print(f"Available spatial levels: {list(file_mappings.keys())}")
+        return
         
-        if len(year_data) > 0:
-            output_file = os.path.join(output_dir, f"{base_name}__{spatial_resolution}_yearly__{year}.parquet")
-            year_data.to_parquet(output_file, index=False)
-            print(f"Saved {len(year_data)} records to {output_file}")
-        else:
-            print(f"No data found for year {year}")
-
-
-def main():
-    """Main processing function"""
-    config, datapaths = load_config()
+    if not year:
+        print("❌ Error: year must be specified")
+        print(f"Available year range: {cfg.data.year_min}-{cfg.data.year_max}")
+        return
     
-    workspace_root = Path(__file__).parent.parent
+    if spatial_level not in file_mappings:
+        print(f"❌ Error: Unknown spatial level '{spatial_level}'")
+        print(f"Available spatial levels: {list(file_mappings.keys())}")
+        return
     
-    input_dir = workspace_root / config['processing']['input_dir']
-    output_base_dir = workspace_root / config['processing']['output_dir']
-    output_format = config['processing']['output_format']
-    file_mappings = config['file_mappings']
-    id_column_mappings = config['id_column_mappings']
-    base_name = config['data']['base_name']
+    year = int(year)
+    if year < cfg.data.year_min or year > cfg.data.year_max:
+        print(f"❌ Error: Year {year} is outside the configured range {cfg.data.year_min}-{cfg.data.year_max}")
+        return
     
-    print(f"Processing {len(file_mappings)} spatial levels: {list(file_mappings.keys())}")
+    print(f"Processing spatial level: {spatial_level}")
+    print(f"Processing year: {year}")
     print(f"Input directory: {input_dir}")
     print(f"Output directory: {output_base_dir}")
-    print(f"Output format: {output_format}")
     
-    # Process each spatial resolution using file_mappings
-    for output_name, input_filename in file_mappings.items():
-        print(f"\n=== Processing {output_name.upper()} data ===")
-        
-        output_dir_name = output_name.replace('-', '_') + '_yearly'
-        output_dir = output_base_dir / output_dir_name
-        
-        # Process 2000s decade data
-        input_file_2000 = input_dir / f"{input_filename}-2000.csv"
-        if input_file_2000.exists():
-            split_data_by_year(str(input_file_2000), output_name.replace('-', '_'), 
-                             str(output_dir), output_format, '2000', id_column_mappings, base_name)
-        else:
-            print(f"Input file not found: {input_file_2000}")
-        
-        # Process 2010s decade data
-        input_file_2010 = input_dir / f"{input_filename}-2010.csv"
-        if input_file_2010.exists():
-            split_data_by_year(str(input_file_2010), output_name.replace('-', '_'), 
-                             str(output_dir), output_format, '2010', id_column_mappings, base_name)
-        else:
-            print(f"Input file not found: {input_file_2010}")
+    # Get input filename for this spatial level
+    input_filename = file_mappings[spatial_level]
+    output_dir = f"{output_base_dir}/{spatial_level}_yearly"
+    
+    # Determine which decade file to use and decade suffix
+    if 2000 <= year <= 2009:
+        input_file = f"{input_dir}/{input_filename}-2000.csv"
+        decade_suffix = '2000'
+    elif 2010 <= year <= 2019:
+        input_file = f"{input_dir}/{input_filename}-2010.csv"
+        decade_suffix = '2010'
+    else:
+        print(f"❌ Error: Year {year} is not in a supported decade range")
+        return
+    
+    if not os.path.exists(input_file):
+        print(f"❌ Error: Input file not found: {input_file}")
+        return
+    
+    # Process the single year and spatial level
+    process_single_year(input_file, spatial_level, output_dir, year, id_column_mappings, decade_suffix)
 
 
 if __name__ == "__main__":

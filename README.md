@@ -25,7 +25,7 @@ In this repository, we download the complete dataset and reformat it into yearly
 
 ---
 
-## Workflow Structure
+# Workflow Structure
 
 The pipeline consists of three main steps:
 
@@ -45,6 +45,8 @@ The pipeline correctly handles this by:
 - Extracting years 2000-2009 from `-2000` files
 - Extracting years 2010-2019 from `-2010` files
 - Using appropriate ID column mappings for each decade (different column names between 2000 and 2010 Census boundaries)
+
+---
 
 # Codebook
 
@@ -152,21 +154,5 @@ The processed files maintain strict formatting standards:
 
 # References
 
-The underlying PM2.5 component data comes from research by Schwartz et al. Please cite the original dataset when using this processed data:
+Amini, H., Danesh-Yazdi, M., Di, Q., Requia, W., Wei, Y., Abu-Awad, Y., Shi, L., Franklin, M., Kang, C.-M., Wolfson, J., James, P., Habre, R., Zhu, Q., Apte, J., Andersen, Z., Kloog, I., Dominici, F., Koutrakis, P., & Schwartz, J. (2022). Hyperlocal super-learned PM2.5 components across the contiguous US. Research Square Platform LLC. doi:10.21203/rs.3.rs-1745433/v1doi: 10.21203/rs.3.rs-1745433/v1
 
-Schwartz, J. (2024). PM2.5 Components Data [Dataset]. Harvard Dataverse. [doi:10.7910/DVN/F6PQAA](https://doi.org/10.7910/DVN/F6PQAA)
-
----
-
-# Data Processing Details
-
-## Decade-based Processing
-
-The original data is organized into two decades:
-- **2000s files** (`*-2000.csv`): Contains data for years 2000-2009 and 2010-2019
-- **2010s files** (`*-2010.csv`): Contains data for years 2000-2019 with updated spatial boundaries
-
-The pipeline correctly handles this by:
-- Extracting years 2000-2009 from `-2000` files
-- Extracting years 2010-2019 from `-2010` files
-- Using appropriate ID column mappings for each decade (different column names between 2000 and 2010 Census boundaries)

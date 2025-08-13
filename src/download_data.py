@@ -32,9 +32,8 @@ def main(cfg: DictConfig):
     # Download the ZIP file
     response = data_api.get_datafile(str(file2id[target_zip_filename]), is_pid=False, auth=False)
     
-    # Create output directory using config
-    output_dir = cfg.processing.input_dir.replace('block-groups-tracts-counties-states-zctas-2000-2010', '').rstrip('/')
-    output_dir_path = os.path.abspath(output_dir)
+    # Create output directory using standard structure
+    output_dir_path = os.path.abspath("data/input/pm25_components__schwartz__raw")
     os.makedirs(output_dir_path, exist_ok=True)
     
     # Save the ZIP file
@@ -65,7 +64,7 @@ def main(cfg: DictConfig):
     print(f"Removed ZIP file: {zip_path}")
     
     print(f"\nData download and extraction complete!")
-    print(f"Files are ready for processing in: {cfg.processing.input_dir}")
+    print(f"Files are ready for processing in: data/input/pm25_components__schwartz__raw/block-groups-tracts-counties-states-zctas-2000-2010/")
 
     
 if __name__ == "__main__":

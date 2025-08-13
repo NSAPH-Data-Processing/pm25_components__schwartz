@@ -1,11 +1,10 @@
 input:
-  pm25_components__randall__raw: 
-    zcta: /n/netscratch/dominici_lab/Lab/pm25_components__randall__raw/zcta/ #/n/dominici_lab/lab/lego/environmental/pm25_components__randall/raw/zcta
-    county: /n/netscratch/dominici_lab/Lab/pm25_components__randall__raw/county/ #/n/dominici_lab/lab/lego/environmental/pm25_components__randall/raw/county
-    tract: /n/netscratch/dominici_lab/Lab/pm25_components__randall__raw/tract/ #/n/dominici_lab/lab/lego/environmental/pm25_components__randall/raw/tract
+  pm25_components__schwartz__raw: 
+    block-groups-tracts-counties-states-zctas-2000-2010: /n/netscratch/dominici_lab/Lab/pm25_components__schwartz__raw/block-groups-tracts-counties-states-zctas-2000-2010/
 
 output:
-  pm25_components__randall: 
-    zcta_daily: /n/dominici_lab/lab/lego/environmental/pm25_components__randall/zcta_daily
-    county_daily: /n/dominici_lab/lab/lego/environmental/pm25_components__randall/county_daily
-    tract_daily: /n/dominici_lab/lab/lego/environmental/pm25_components__randall/tract_daily
+  block_group_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/block_group_yearly
+  county_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/county_yearly
+  state_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/state_yearly
+  tract_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/tract_yearly
+  zcta_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/zcta_yearly

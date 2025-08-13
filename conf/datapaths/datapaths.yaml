@@ -1,11 +1,10 @@
 input:
-  pm25_components__randall__raw: 
-    zcta: null
-    county: null
-    tract: null
+  pm25_components__schwartz__raw: 
+    block-groups-tracts-counties-states-zctas-2000-2010: null
 
 output:
-  pm25_components__randall: 
-    zcta_daily: null
-    county_daily: null
-    tract_daily: null
+  block_group_yearly: null
+  county_yearly: null
+  state_yearly: null
+  tract_yearly: null
+  zcta_yearly: null

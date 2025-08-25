@@ -1,0 +1,10 @@
+input:
+  pm25_components__schwartz__raw: 
+    block-groups-tracts-counties-states-zctas-2000-2010: null
+
+output:
+  block_group_yearly: null
+  county_yearly: null
+  state_yearly: null
+  tract_yearly: null
+  zcta_yearly: null

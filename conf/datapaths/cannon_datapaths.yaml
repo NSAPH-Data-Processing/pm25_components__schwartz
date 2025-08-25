@@ -1,0 +1,10 @@
+input:
+  pm25_components__schwartz__raw: 
+    block-groups-tracts-counties-states-zctas-2000-2010: /n/netscratch/dominici_lab/Lab/pm25_components__schwartz__raw/block-groups-tracts-counties-states-zctas-2000-2010/
+
+output:
+  block_group_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/block_group_yearly
+  county_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/county_yearly
+  state_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/state_yearly
+  tract_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/tract_yearly
+  zcta_yearly: /n/dominici_lab/lab/lego/environmental/pm25_components__schwartz/zcta_yearly
